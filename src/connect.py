@@ -19,6 +19,7 @@ def server_connect():
 
 # FUNCTION TO CREATE DATABASE
 def create_db():
+    
     cursor = server_connect()[1]
     cursor.execute("DROP DATABASE IF EXISTS mydatabase")
     query = "CREATE DATABASE mydatabase"
@@ -39,6 +40,7 @@ def read_file(path_to_csv):
     df = df.loc[:, ~df.columns.str.contains('^Unamed')]
     return df
     
+
 
 
 create_db()
