@@ -35,8 +35,8 @@ def create_database(database_name: str) -> None:
     print(res)
 
 #FUNCTION TO CREATE TABLE
-def create_table_in_sql(database_name: str, table_name: str, ) -> None:
-    cursor.execute(f"USE {database_name}") #tells sql which database you want to use.
+def create_table_in_sql(database_name: str, table_name: str, col_type ) -> None:
+    cursor.execute(f"USE {database_name}") 
     
     #drop table if already exists
     sql_query = f"DROP TABLE IF EXISTS {database_name}"
@@ -71,7 +71,7 @@ def python_df_to_sql_table(df: pd.DataFrame) -> Tuple[str, str]:
 
 
 #FUNCTION TO READ CSV AS PANDAS DATAFRAMES, RETURN DATAFRAMES
-def read_data(file_path):
+def read_data(file_path: str) -> pd.DataFrame:
     df = pd.read_csv(file_path)
     df.drop("Unnamed: 0", axis=1, inplace=True, errors='ignore')
     
@@ -79,7 +79,7 @@ def read_data(file_path):
     
 
 #FUNCTION TO INSERT DATA INTO DATABASE
-def insert_data(df, table_name, values):
+def insert_data(df: pd.DataFrame, table_name: str, values):
     sql_query = f"INSERT INTO {table_name} (df.columns) VALUES (values)"
     cursor.execute(sql_query)
     connection.commit()
