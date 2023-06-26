@@ -1,66 +1,88 @@
 import logging
 import pandas as pd
 import mysql.connector as mysql
-from typing import Tuple
+from typing import Tuple, List, Optional
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv('.env')
+#FUNCTION TO CONNECT TO MYSQL DATABASE
 
-logging.basicConfig(filename='example.log',
-                    format='%(asctime)s:%(levelname)s:%(message)s',
-                    level=logging.INFO)
+def db_connection(database: str = None) -> Tuple[mysql.connection.MySQLConnection, str]:
+    load_dotenv(".env")                 
+    connection = mysql.connect(
+        host = os.getenv("HOST"),
+        user= os.getenv("USER"),
+        password = os.getenv("PASSWORD"),
+        database = None
+    )
 
-def connect_db(host: str, user: str) -> Tuple[mysql.connection.MySQLConnection, mysql.cursor.MySQLCursor]:
-    """_summary_
-    
-    Args:
-        host (str): _description_
-        user (str): _description_
-        
-    Returns:
-        Tuple[mysql.connection.MySQLConnection, mysql.cursor.MySQLCursor]: _description_
-    """
-    if not host:
-        raise ValueError('missing required arg: host')
-    if not user:
-        raise ValueError('missing required arg: user')
-    
-    try:
-        #connect to mysql server
-        mydb = mysql.connect(
-            host=host,
-            user=user,
-            password=os.getenv('PASSWORD'))
-        
-        #create cursor object
-        mycursor = mydb.cursor()
-        logging.info('Connected to MySQL')
-    except Exception as e:
-        raise ConnectionError(f"error: {e}")
-    else:
-        print("Successfully connected to server")
-    return mydb, mycursor
+    #CREATE CURSOR
+    cursor = connection.cursor()
+    return connection, cursor
 
-mydb, cur = server_connect(host='localhost', user='root')
+#FUNCTION TO CREATE DATABASE
 
-def create_db(cursor: str, database_name: str):
-    
-    cursor.execute(f'DROP DATABASE IF EXISTS {database_name}')
-    logging.info('dropped database')
-    
-    query = f"CREATE DATABASE {database_name}"
-    cursor.execute(query)
-    logging.info("created database")
-    
+def create_database(database_name: str) -> None:
+    sql_query = f"DROP DATABASE IF EXISTS {database_name}"
+    cursor.execute(sql_query)
+
+    sql_query = f"CREATE DATABASE {database_name}"
+    cursor.execute(sql_query)
+
     cursor.execute("SHOW DATABASES")
-    database = cursor.fetchall()
+    res = cursor.fetchall()
+    print(res)
+
+#FUNCTION TO CREATE TABLE
+def create_table_in_sql(database_name: str, table_name: str, ) -> None:
+    cursor.execute(f"USE {database_name}") #tells sql which database you want to use.
+    
+    #drop table if already exists
+    sql_query = f"DROP TABLE IF EXISTS {database_name}"
+    cursor.execute(sql_query)
+
+    sql_query = f"CREATE TABLE ({col_type})"
+    cursor.execute(sql_query)
+    
     return None
 
 
-def create_table_in_sql():
-    cursor = server_connect()[1]
-    cursor.execute("USE mydatabase")
-    cursor.execute("DROP TABLE IF EXISTS customers")
-    return cursor.execute("CREATE TABLE customers \
-                    (name VARCHAR(255), address VARCHAR(255))")
+#FUNCTION TO CONVERT PANDAS DTYPES TO SQL DATA TYPES
+def python_df_to_sql_table(df: pd.DataFrame) -> Tuple[str, str]:
+    types = []
+    for i in df.dtypes:
+        if i == 'object':
+            types.append('VARCHAR(255)')
+        elif i == 'float64':
+            types.append('FLOAT')
+        elif i == 'int64':
+            types.append('INT')
+            
+    # Combine column names and data types into a string of SQL schema
+    col_type = list(zip(df.columns.values, types))
+    col_type = tuple([" ".join(i) for i in col_type])
+    col_type = ", ".join(col_type)
+    
+    # Create a string of placeholder values for SQL queries
+    values = ', '.join(['%s' for _ in range(len(df.columns))])
+    
+    return col_type, values
+
+
+#FUNCTION TO READ CSV AS PANDAS DATAFRAMES, RETURN DATAFRAMES
+def read_data(file_path):
+    df = pd.read_csv(file_path)
+    df.drop("Unnamed: 0", axis=1, inplace=True, errors='ignore')
+    
+    return df
+    
+
+#FUNCTION TO INSERT DATA INTO DATABASE
+def insert_data(df, table_name, values):
+    sql_query = f"INSERT INTO {table_name} (df.columns) VALUES (values)"
+    cursor.execute(sql_query)
+    connection.commit()
+    num_records_inserted = cursor.rowcount()
+    
+    return num_records_inserted
