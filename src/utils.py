@@ -23,7 +23,7 @@ def db_connection(database: str = None) -> Tuple[mysql.connection.MySQLConnectio
 
 #FUNCTION TO CREATE DATABASE
 
-def create_database(database_name: str) -> None:
+def create_database(database_name: str, cursor: str) -> None:
     sql_query = f"DROP DATABASE IF EXISTS {database_name}"
     cursor.execute(sql_query)
 
@@ -35,14 +35,14 @@ def create_database(database_name: str) -> None:
     print(res)
 
 #FUNCTION TO CREATE TABLE
-def create_table_in_sql(database_name: str, table_name: str, col_type ) -> None:
+def create_table_in_sql(database_name: str, table_name: str, col_type:str, cursor:str) -> None:
     cursor.execute(f"USE {database_name}") 
     
     #drop table if already exists
-    sql_query = f"DROP TABLE IF EXISTS {database_name}"
+    sql_query = f"DROP TABLE IF EXISTS {table_name}"
     cursor.execute(sql_query)
 
-    sql_query = f"CREATE TABLE ({col_type})"
+    sql_query = f'CREATE TABLE {table_name} ({col_type})'
     cursor.execute(sql_query)
     
     return None
@@ -79,10 +79,12 @@ def read_data(file_path: str) -> pd.DataFrame:
     
 
 #FUNCTION TO INSERT DATA INTO DATABASE
-def insert_data(df: pd.DataFrame, table_name: str, values):
-    sql_query = f"INSERT INTO {table_name} (df.columns) VALUES (values)"
-    cursor.execute(sql_query)
-    connection.commit()
-    num_records_inserted = cursor.rowcount()
+def insert_data(df: pd.DataFrame, table_name: str, values: str, cursor: str, connection: str):
+    for i, row in df.iterrows():
+        sql = f"INSERT INTO {table_name} VALUES ({values})"
+        cursor.execute(sql, tuple(row))
+        connection.commit()
+    # print(cursor.rowcount)
     
-    return num_records_inserted
+    
+    
