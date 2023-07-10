@@ -56,7 +56,7 @@ def process():
     file_name = path.split('/')[1].split('.')[0]
     df = read_data("path")
     results = convert_timestamp_to_hourly(df)
-    results = perform_groupby(results)
+    results = perform_groupby(results,["timestamp", "product_id"], {'quantity': 'sum'} )
     results.to_csv(f"data/{file_name}_agg.csv", index=False) #sales_agg.csv
     return None
 
