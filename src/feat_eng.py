@@ -68,9 +68,7 @@ def process():
     
     #add additional features from sales table
     categories_df = create_dataframe(sales_df, ['product_id', 'category'] )
-    categories_df.drop_duplicates()
     unitPrice_df = create_dataframe(sales_df, ['product_id', 'unit_price'] )
-    unitPrice_df.drop_duplicates()
     
     #merge extracted columns with the main dataframe above
     merged_df = merged_df.merge(categories_df, on='product_id', how='left')
@@ -82,7 +80,7 @@ def process():
     
     #drop the product id column. no need for machine learning
     merged_df = merged_df.drop("product_id")
-    merged_df.to_csv()
+    merged_df.to_csv("merged_df.csv", index=False)
     
     return None
     
