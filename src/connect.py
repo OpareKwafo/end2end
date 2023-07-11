@@ -8,12 +8,12 @@ parser = argparse.ArgumentParser(
                     description='creates db and inserts data')
 
 parser.add_argument('-db', '--create_db_or_not', type=bool,
-                    default=False)
+                    default=False, help="Use this flag to create a database")
 parser.add_argument('-db_name', '--database_name',type=str,
-                    required=True)
+                    required=True, help="Use this flag to name your database")
 parser.add_argument('-tb_name', '--table_name', type=str,
-                    required=True)
-parser.add_argument('-fp', '--file_path', type=str, required=True)
+                    required=False, help="Use this flag to name your table")
+parser.add_argument('-fp', '--file_path', type=str, required=False, help="Provide the path to your dataset")
 
 args = parser.parse_args()
 
