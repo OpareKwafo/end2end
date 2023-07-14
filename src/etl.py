@@ -1,6 +1,6 @@
 import pandas as pd
 from datetime import datetime
-from utils import read_data
+from src.utils import read_data
 import os
 
 # sales = pd.read_csv("data\sales.csv", usecols=lambda column: column != 'Unnamed: 0')
@@ -8,7 +8,7 @@ import os
 # stock = pd.read_csv("data\sensor_stock_levels.csv", usecols=lambda column: column != 'Unnamed: 0')
 
 
-def convert_timestamp_to_hourly(data: pd.DataFrame = None, column: str = None):
+def convert_timestamp_to_hourly(data: pd.DataFrame = None, column: str = 'timestamp'):
     """
     Rounds up the timestamp information to the nearest hour. 
 
@@ -19,8 +19,8 @@ def convert_timestamp_to_hourly(data: pd.DataFrame = None, column: str = None):
     Returns:
         _type_: pd.DataFrame. New DataFrame with the hours rounded off in the timestamp column.
     """
+    data[column] = pd.to_datetime(data[column])
     dummy = data.copy()
-    data['timestamp'] = pd.to_datetime(data['timestamp'])
     new_ts = dummy[column].tolist()
     new_ts = [i.strftime('%Y-%m-%d %H:00:00') for i in new_ts]
     new_ts = [datetime.strptime(i, '%Y-%m-%d %H:00:00') for i in new_ts]
@@ -54,7 +54,7 @@ def process():
     """
     path = "data/sales.csv"
     file_name = path.split('/')[1].split('.')[0]
-    df = read_data("path")
+    df = read_data(path)
     results = convert_timestamp_to_hourly(df)
     results = perform_groupby(results,["timestamp", "product_id"], {'quantity': 'sum'} )
     results.to_csv(f"data/{file_name}_agg.csv", index=False) #sales_agg.csv
