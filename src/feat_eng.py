@@ -32,24 +32,8 @@ def extract_datetime_features(dataframe: pd.DataFrame, column_name: str) -> pd.D
    
     dataframe['Day'] = dataframe[column_name].dt.dayofweek
     dataframe['Hour'] = dataframe[column_name].dt.hour
-    dataframe.drop(column_name)
+    dataframe.drop(column_name, axis=1)
    
-    return dataframe
-      
-     
-def categorical_to_numeric(dataframe: pd.DataFrame, categorical_column: str) -> pd.DataFrame:
-    """
-    Converts a categorical column to numeric using one-hot encoding and drops categorical column after.
-
-    Args:
-        dataframe (pd.DataFrame): DataFrame containing our categorical column.
-        categorical_column (str): name of categorical column.
-
-    Returns:
-        pd.DataFrame: DataFrame with the one-hot encoding features.
-    """
-    dataframe = pd.get_dummies(dataframe, columns=[categorical_column])
-    dataframe = dataframe.drop(categorical_column)
     return dataframe
     
     
@@ -59,6 +43,8 @@ def process():
     temp_df = pd.read_csv("data\sensor_storage_temperature_agg.csv")
     stock_df = pd.read_csv("data\sensor_stock_levels_agg.csv")
     
+    sales = pd.read_csv("data\sales.csv")
+    
     #merge all dataframes
     merged_df = stock_df.merge(sales_df, on=['timestamp', 'product_id'], how='left')
     merged_df = merged_df.merge(temp_df, on='timestamp', how='left')
@@ -67,20 +53,20 @@ def process():
     merged_df = merged_df.fillna(0)
     
     #add additional features from sales table
-    categories_df = create_dataframe(sales_df, ['product_id', 'category'] )
-    unitPrice_df = create_dataframe(sales_df, ['product_id', 'unit_price'] )
+    categories_df = create_dataframe(sales, ['product_id', 'category'] )
+    unitPrice_df = create_dataframe(sales, ['product_id', 'unit_price'] )
     
     #merge extracted columns with the main dataframe above
     merged_df = merged_df.merge(categories_df, on='product_id', how='left')
     merged_df = merged_df.merge(unitPrice_df, on='product_id', how='left')
     
     #extract day and hour from the merged dataframe
-    merged_df = extract_datetime_features(merged_df)
-    merged_df = categorical_to_numeric(merged_df, "category")
+    merged_df = extract_datetime_features(merged_df, column_name='timestamp')
+    merged_df = pd.get_dummies(merged_df, columns=["category"], dtype=int)
     
     #drop the product id column. no need for machine learning
-    merged_df = merged_df.drop("product_id")
-    merged_df.to_csv("merged_df.csv", index=False)
+    merged_df = merged_df.drop(["product_id", "timestamp"], axis=1)
+    merged_df.to_csv("data\merged_df.csv", index=False)
     
     return None
     
