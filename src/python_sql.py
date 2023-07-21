@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import mysql.connector as mysql
 from dotenv import load_dotenv
-from src.utils import db_connection
+from utils import db_connection
 from aws import upload_to_s3
 
 
@@ -14,7 +14,7 @@ def run_sql_script(database: str, sql_script_path: Path) -> pd.DataFrame:
     load_dotenv(env_path)
     
     # connect to sql
-    connection, cursor = db_connection(database)
+    connection, cursor = db_connection(database=database)
     
     # now open the sql file and grab query
     with open(sql_script_path, 'r') as file:
@@ -27,15 +27,21 @@ def run_sql_script(database: str, sql_script_path: Path) -> pd.DataFrame:
     # fetch results to dataframe
     df = pd.read_sql_query(sql_query, connection)
     
+    #close cursor
+    cursor.close()
+    
     #close connection
     connection.close()
     
+    
     return df    
     
-def process() -> pd.DataFrame:
+def process():
     
     database = "processed_data"
     sql_script_path = Path("src\inventory_data.sql")
     df = run_sql_script(database, sql_script_path)
     upload_to_s3(df, "merged_data.csv")
-    return None
+    print("successfully uploaded to S3")
+    
+process()
