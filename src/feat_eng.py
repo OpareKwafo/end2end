@@ -1,4 +1,6 @@
 import pandas as pd
+from src.aws import upload_to_s3
+from src.aws import read_from_s3
     
 def create_dataframe(sales_df: pd.DataFrame, columns_to_extract: list[str]) -> pd.DataFrame:
     """
@@ -38,16 +40,9 @@ def extract_datetime_features(dataframe: pd.DataFrame, column_name: str) -> pd.D
     
     
 def process():
-    #read dataframes
-    sales_df = pd.read_csv("data\sales_agg.csv")
-    temp_df = pd.read_csv("data\sensor_storage_temperature_agg.csv")
-    stock_df = pd.read_csv("data\sensor_stock_levels_agg.csv")
     
     sales = pd.read_csv("data\sales.csv")
-    
-    #merge all dataframes
-    merged_df = stock_df.merge(sales_df, on=['timestamp', 'product_id'], how='left')
-    merged_df = merged_df.merge(temp_df, on='timestamp', how='left')
+    merged_df = read_from_s3("merged_data.csv")
     
     #fill missing values
     merged_df = merged_df.fillna(0)
@@ -66,7 +61,9 @@ def process():
     
     #drop the product id column. no need for machine learning
     merged_df = merged_df.drop(["product_id", "timestamp"], axis=1)
-    merged_df.to_csv("data\merged_df.csv", index=False)
     
-    return None
+    #merged_df.to_csv("data\merged_df.csv", index=False)
+    upload_to_s3(merged_df, "features.csv")
+    
+    print("dataframe has been successfully uploaded to S3")
     
